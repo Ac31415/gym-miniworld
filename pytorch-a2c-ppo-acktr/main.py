@@ -12,12 +12,22 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+# display results on tensorboard
+import tensorboardX
+
 import algo
 from arguments import get_args
 from envs import make_vec_envs
 from model import Policy
 from storage import RolloutStorage
 #from visualize import visdom_plot
+
+# import util func
+import utils
+
+# use datetime to make unique name
+import time
+import datetime
 
 args = get_args()
 
@@ -60,6 +70,14 @@ def main():
         win = None
     """
 
+    date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
+
+    save_path_csv = os.path.join(args.save_dir, args.algo, date)
+
+    csv_file, csv_logger = utils.get_csv_logger(save_path_csv)
+
+    episode = 0
+
     envs = make_vec_envs(args.env_name, args.seed, args.num_processes,
                         args.gamma, args.log_dir, args.add_timestep, device, False)
 
@@ -91,6 +109,8 @@ def main():
     rollouts.to(device)
 
     episode_rewards = deque(maxlen=100)
+
+    all_episode_rewards_np = []
 
     start = time.time()
     for j in range(num_updates):
@@ -136,7 +156,8 @@ def main():
             print('Saving model')
             print()
 
-            save_path = os.path.join(args.save_dir, args.algo)
+            # save_path = os.path.join(args.save_dir, args.algo)
+            save_path = os.path.join(args.save_dir, args.algo, date)
             try:
                 os.makedirs(save_path)
             except OSError:
@@ -167,6 +188,39 @@ def main():
                     np.count_nonzero(np.greater(episode_rewards, 0)) / len(episode_rewards)
                 )
             )
+
+            # torch.set_printoptions(threshold=10_000)
+
+            # header = ["episode", "reward"]
+            # data = [episode, num_frames, fps, duration]
+            # csv_logger.writerow(data)
+            # csv_file.flush()
+
+            episode_rewards_np = []
+
+            header = ["episode", "reward"]
+
+            if episode == 0:
+                csv_logger.writerow(header)
+
+            for i in episode_rewards:
+                # episode_rewards_np = i.numpy()
+                episode_rewards_np = np.append(episode_rewards_np, i.numpy())
+                all_episode_rewards_np = np.append(all_episode_rewards_np, i.numpy())
+
+                # for j in i.numpy():
+                #     data = [episode, j]
+
+                data = [episode, (i.numpy())[0]]
+                csv_logger.writerow(data)
+                csv_file.flush()
+                episode += 1
+                # print(episode_rewards_np)
+
+            # episode_rewards_np = episode_rewards[0].numpy()
+
+            print(episode_rewards_np)
+            print(all_episode_rewards_np)
 
         if args.eval_interval is not None and len(episode_rewards) > 1 and j % args.eval_interval == 0:
             eval_envs = make_vec_envs(args.env_name, args.seed + args.num_processes, args.num_processes,

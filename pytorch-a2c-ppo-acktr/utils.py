@@ -1,6 +1,14 @@
 import torch
 import torch.nn as nn
 
+import csv
+import os
+import torch
+import logging
+import sys
+
+import utils
+
 #from envs import VecNormalize
 
 
@@ -50,3 +58,14 @@ def init(module, weight_init, bias_init, gain=1):
 def init_normc_(weight, gain=1):
     weight.normal_(0, 1)
     weight *= gain / torch.sqrt(weight.pow(2).sum(1, keepdim=True))
+
+def create_folders_if_necessary(path):
+    dirname = os.path.dirname(path)
+    if not os.path.isdir(dirname):
+        os.makedirs(dirname)
+
+def get_csv_logger(model_dir):
+    csv_path = os.path.join(model_dir, "log.csv")
+    utils.create_folders_if_necessary(csv_path)
+    csv_file = open(csv_path, "a")
+    return csv_file, csv.writer(csv_file)

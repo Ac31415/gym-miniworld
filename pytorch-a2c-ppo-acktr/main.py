@@ -110,10 +110,12 @@ def main():
 
     episode_rewards = deque(maxlen=100)
 
-    all_episode_rewards_np = []
+    all_updates_rewards_np = []
+    header = ["episode", "reward"]
 
     start = time.time()
     for j in range(num_updates):
+
         for step in range(args.num_steps):
             # Sample actions
             with torch.no_grad():
@@ -174,6 +176,28 @@ def main():
 
         total_num_steps = (j + 1) * args.num_processes * args.num_steps
 
+        if j == 0:
+            csv_logger.writerow(header)
+
+        if len(episode_rewards) >= 1:
+            all_updates_rewards_np = np.append(all_updates_rewards_np, np.mean(episode_rewards))
+
+            # for j in i.numpy():
+            #     data = [episode, j]
+
+            data = [j, np.mean(episode_rewards)]
+            csv_logger.writerow(data)
+            csv_file.flush()
+        else:
+            all_updates_rewards_np = np.append(all_updates_rewards_np, 0)
+
+            # for j in i.numpy():
+            #     data = [episode, j]
+
+            data = [j, 0]
+            csv_logger.writerow(data)
+            csv_file.flush()
+
         if j % args.log_interval == 0 and len(episode_rewards) > 1:
             end = time.time()
             print("Updates {}, num timesteps {}, FPS {} \n Last {} training episodes: mean/median reward {:.2f}/{:.2f}, min/max reward {:.2f}/{:.2f}, success rate {:.2f}\n".
@@ -196,31 +220,31 @@ def main():
             # csv_logger.writerow(data)
             # csv_file.flush()
 
-            episode_rewards_np = []
-
-            header = ["episode", "reward"]
-
-            if episode == 0:
-                csv_logger.writerow(header)
-
-            for i in episode_rewards:
-                # episode_rewards_np = i.numpy()
-                episode_rewards_np = np.append(episode_rewards_np, i.numpy())
-                all_episode_rewards_np = np.append(all_episode_rewards_np, i.numpy())
-
-                # for j in i.numpy():
-                #     data = [episode, j]
-
-                data = [episode, (i.numpy())[0]]
-                csv_logger.writerow(data)
-                csv_file.flush()
-                episode += 1
-                # print(episode_rewards_np)
-
-            # episode_rewards_np = episode_rewards[0].numpy()
-
-            # print(episode_rewards_np)
-            # print(all_episode_rewards_np)
+            # episode_rewards_np = []
+            #
+            # header = ["episode", "reward"]
+            #
+            # if episode == 0:
+            #     csv_logger.writerow(header)
+            #
+            # for i in episode_rewards:
+            #     # episode_rewards_np = i.numpy()
+            #     episode_rewards_np = np.append(episode_rewards_np, i.numpy())
+            #     all_episode_rewards_np = np.append(all_episode_rewards_np, i.numpy())
+            #
+            #     # for j in i.numpy():
+            #     #     data = [episode, j]
+            #
+            #     data = [episode, (i.numpy())[0]]
+            #     csv_logger.writerow(data)
+            #     csv_file.flush()
+            #     episode += 1
+            #     # print(episode_rewards_np)
+            #
+            # # episode_rewards_np = episode_rewards[0].numpy()
+            #
+            # # print(episode_rewards_np)
+            # # print(all_episode_rewards_np)
 
         if args.eval_interval is not None and len(episode_rewards) > 1 and j % args.eval_interval == 0:
             eval_envs = make_vec_envs(args.env_name, args.seed + args.num_processes, args.num_processes,

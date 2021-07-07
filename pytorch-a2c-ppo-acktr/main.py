@@ -219,8 +219,8 @@ def main():
 
             # episode_rewards_np = episode_rewards[0].numpy()
 
-            print(episode_rewards_np)
-            print(all_episode_rewards_np)
+            # print(episode_rewards_np)
+            # print(all_episode_rewards_np)
 
         if args.eval_interval is not None and len(episode_rewards) > 1 and j % args.eval_interval == 0:
             eval_envs = make_vec_envs(args.env_name, args.seed + args.num_processes, args.num_processes,

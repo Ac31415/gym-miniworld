@@ -72,9 +72,9 @@ def main():
 
     date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
 
-    save_path_csv = os.path.join(args.save_dir, args.algo, date)
-
-    csv_file, csv_logger = utils.get_csv_logger(save_path_csv)
+    # save_path_csv = os.path.join(args.save_dir, args.algo, str(args.num_frames) + " frames", str(args.num_processes) + " CPU processes", str(args.num_steps) + " forward steps in A2C", str(args.lr) + " learning rate", args.env_name, date)
+    #
+    # csv_file, csv_logger = utils.get_csv_logger(save_path_csv)
 
     episode = 0
 
@@ -91,14 +91,22 @@ def main():
                                args.entropy_coef, lr=args.lr,
                                eps=args.eps, alpha=args.alpha,
                                max_grad_norm=args.max_grad_norm)
+        save_path_csv = os.path.join(args.save_dir, args.algo, str(args.num_frames) + " frames", str(args.num_processes) + " CPU processes", str(args.num_steps) + " forward steps in A2C", str(args.lr) + " learning rate", args.env_name, date)
+        save_path = os.path.join(args.save_dir, args.algo, str(args.num_frames) + " frames", str(args.num_processes) + " CPU processes", str(args.num_steps) + " forward steps in A2C", str(args.lr) + " learning rate", args.env_name, date)
     elif args.algo == 'ppo':
         agent = algo.PPO(actor_critic, args.clip_param, args.ppo_epoch, args.num_mini_batch,
                          args.value_loss_coef, args.entropy_coef, lr=args.lr,
                                eps=args.eps,
                                max_grad_norm=args.max_grad_norm)
+        save_path_csv = os.path.join(args.save_dir, args.algo, str(args.num_frames) + " frames", str(args.num_processes) + " CPU processes", str(args.ppo_epoch) + " epochs", str(args.num_mini_batch) + " batches", "clip parameter of " + str(args.clip_param), str(args.lr) + " learning rate", args.env_name, date)
+        save_path = os.path.join(args.save_dir, args.algo, str(args.num_frames) + " frames", str(args.num_processes) + " CPU processes", str(args.ppo_epoch) + " epochs", str(args.num_mini_batch) + " batches", "clip parameter of " + str(args.clip_param), str(args.lr) + " learning rate", args.env_name, date)
     elif args.algo == 'acktr':
         agent = algo.A2C_ACKTR(actor_critic, args.value_loss_coef,
                                args.entropy_coef, acktr=True)
+        save_path_csv = os.path.join(args.save_dir, args.algo, str(args.num_frames) + " frames", str(args.num_processes) + " CPU processes", str(args.lr) + " learning rate", args.env_name, date)
+        save_path = os.path.join(args.save_dir, args.algo, str(args.num_frames) + " frames", str(args.num_processes) + " CPU processes", str(args.lr) + " learning rate", args.env_name, date)
+
+    csv_file, csv_logger = utils.get_csv_logger(save_path_csv)
 
     rollouts = RolloutStorage(args.num_steps, args.num_processes,
                         envs.observation_space.shape, envs.action_space,
@@ -159,7 +167,7 @@ def main():
             print()
 
             # save_path = os.path.join(args.save_dir, args.algo)
-            save_path = os.path.join(args.save_dir, args.algo, date)
+            # save_path = os.path.join(args.save_dir, args.algo, str(args.num_frames) + " frames", str(args.num_processes) + " CPU processes", str(args.num_steps) + " forward steps in A2C", str(args.lr) + " learning rate", args.env_name, date)
             try:
                 os.makedirs(save_path)
             except OSError:
